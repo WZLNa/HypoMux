@@ -72,7 +72,7 @@ Windows 系统默认会优先选择跃点数（Metric）较低的网卡传输数
 
 **1. 克隆仓库与准备环境**
 ```bash
-git clone [https://github.com/YourUsername/NetBooster.git](https://github.com/YourUsername/NetBooster.git)
+git clone [https://github.com/Hypostasis-Cat/NetBooster.git]
 cd NetBooster
 python -m venv venv
 ```
@@ -191,12 +191,13 @@ By default, Windows prioritizes network adapters with lower metrics for data tra
 
 **1. Clone Repository & Prepare Environment**
 ```bash
-git clone [https://github.com/YourUsername/NetBooster.git](https://github.com/YourUsername/NetBooster.git)
+git clone [https://github.com/Hypostasis-Cat/NetBooster.git]
 cd NetBooster
 python -m venv venv
 ```
 
 **2. Activate Virtual Environment**
+
 ```bash
 # Windows (CMD)
 venv\Scripts\activate
