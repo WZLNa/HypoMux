@@ -74,7 +74,13 @@ if __name__ == "__main__":
     admin_check = check_admin_privileges()
     
     # ========== 第二步：立刻创建 QApplication（在任何 QWidget 之前）==========
+    from PySide6.QtCore import QCoreApplication
     from PySide6.QtWidgets import QApplication, QMessageBox
+    runtime_dir = os.path.dirname(os.path.abspath(__file__))
+    qt_plugin_path = os.path.join(runtime_dir, "PySide6", "qt-plugins")
+    if os.path.exists(qt_plugin_path):
+        QCoreApplication.addLibraryPath(qt_plugin_path)
+        os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(qt_plugin_path, "platforms")
     app = QApplication(sys.argv)
     
     # ========== 第三步：延迟导入 MainWindow（现在 QApplication 已存在）==========
