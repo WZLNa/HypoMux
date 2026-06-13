@@ -25,8 +25,7 @@ NetBooster 是一款基于 **PySide6** 与 **QFluentWidgets** 开发的现代化
 ---
 
 ## 📷 界面预览
-
-> 📌 **提示**：请将您的软件运行截图重命名为 `screenshot.png` 并放入项目根目录的 `assets/` 文件夹中。
+
 
 <p align="center">
   <img src="assets/screenshot.png" alt="NetBooster UI Preview" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
