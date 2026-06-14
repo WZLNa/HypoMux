@@ -32,6 +32,18 @@ logging.basicConfig(
 )
 
 
+def _get_windows_startupinfo():
+    """
+    获取 Windows 下用于隐藏子进程窗口的 STARTUPINFO。
+    """
+    startupinfo = None
+    if sys.platform == "win32":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = 0
+    return startupinfo
+
+
 # ========== 管理员权限检测与提权 ==========
 
 def is_admin() -> bool:
@@ -94,11 +106,13 @@ def _run_powershell_command(command: str, timeout: int = 10) -> Tuple[bool, str]
         Tuple[bool, str]: (是否成功, 输出内容或错误信息)
     """
     try:
+        startupinfo = _get_windows_startupinfo()
         result = subprocess.run(
             ["powershell", "-NoProfile", "-Command", command],
             capture_output=True,
             text=True,
             timeout=timeout,
+            startupinfo=startupinfo,
             encoding='mbcs',
             errors='replace'
         )
@@ -374,3 +388,110 @@ def reset_adapter_metric(if_index: int) -> Tuple[bool, str]:
         Tuple[bool, str]: (是否成功, 结果信息)
     """
     return set_adapter_metric(if_index, auto_metric=True)
+
+
+# ========== 全局 TCP/系统底层策略：死网关检测 ==========
+
+def set_dead_gateway_detection(enabled: bool) -> Tuple[bool, str]:
+    """
+    开关 Windows 的死网关检测（Dead Gateway Detection）机制。
+
+    多网卡并发下载时，慢速链路被瞬间塞爆会触发 Windows TCP/IP 状态机的
+    死网关检测，导致慢网卡被系统判定为"失效"而中途罢工。关闭该机制可
+    阻止系统主动放弃慢速链路，从而维持多网卡并发的稳定性。
+
+    - 加速启动时：禁用（disabled），阻止系统踢掉慢网卡
+    - 恢复默认/退出时：启用（enabled），还原系统默认行为
+
+    使用纯数字/英文参数，不涉及任何中文字符，杜绝乱码隐患。
+
+    Args:
+        enabled: True 恢复系统默认（enabled），False 关闭检测（disabled）
+
+    Returns:
+        Tuple[bool, str]: (是否成功, 结果信息)
+    """
+    state = "enabled" if enabled else "disabled"
+    ps_command = f"netsh interface ipv4 set global deadgatewaydetection={state}"
+    log_action = f"{'恢复' if enabled else '关闭'}死网关检测 (deadgatewaydetection={state})"
+
+    try:
+        logger.info(f"执行操作: {log_action}")
+        ps_success, ps_output = _run_powershell_command(ps_command, timeout=10)
+
+        if ps_success:
+            success_msg = f"成功: {log_action}"
+            logger.info(success_msg)
+            return True, success_msg
+        else:
+            error_msg = f"执行失败: {ps_output}"
+            logger.error(error_msg)
+            return False, error_msg
+    except Exception as e:
+        error_msg = f"设置死网关检测时发生异常: {type(e).__name__}: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
+
+# ========== 动态路由微调防僵死机制（Metric Jiggling） ==========
+
+def jiggle_adapter_metric(
+    if_index: int,
+    base_metric: int = 10,
+    jiggle_delay_ms: int = 5
+) -> Tuple[bool, str]:
+    """
+    对单个网卡执行一次无感的"跃点微调抖动"（Metric Jiggling）。
+
+    核心逻辑：将当前固定跃点 base_metric（默认 10）短暂改为 base_metric+1
+    （如 11），间隔几毫秒后立即改回 base_metric。通过动态抖动路由跃点，
+    强行迫使 Windows 立即刷新并重置该网卡的路由缓存（Routing Cache），
+    从而主动唤醒因 TCP 指数退避而陷入睡死状态的慢速链路，拉回并发大乱斗。
+
+    所有命令均通过 InterfaceIndex 纯数字标识执行，杜绝中文乱码隐患。
+
+    Args:
+        if_index: 网卡接口索引（InterfaceIndex）
+        base_metric: 网卡当前的固定跃点基准值（加速预设为 10）
+        jiggle_delay_ms: 抖动到改回之间的间隔（毫秒），默认 5ms
+
+    Returns:
+        Tuple[bool, str]: (是否成功, 结果信息)
+    """
+    import time
+
+    try:
+        if not isinstance(if_index, int) or if_index <= 0:
+            error_msg = f"无效的接口索引: {if_index}"
+            logger.error(error_msg)
+            return False, error_msg
+
+        if not isinstance(base_metric, int) or base_metric < 1 or base_metric >= 9999:
+            error_msg = f"无效的基准跃点数: {base_metric}"
+            logger.error(error_msg)
+            return False, error_msg
+
+        jiggle_metric = base_metric + 1
+
+        # 第一步：短暂抖动到 base_metric + 1
+        ok_up, out_up = set_adapter_metric(if_index, metric=jiggle_metric, auto_metric=False)
+        if not ok_up:
+            return False, f"抖动阶段失败: {out_up}"
+
+        # 第二步：短暂等待几毫秒后立即改回 base_metric
+        time.sleep(max(0, jiggle_delay_ms) / 1000.0)
+
+        ok_down, out_down = set_adapter_metric(if_index, metric=base_metric, auto_metric=False)
+        if not ok_down:
+            return False, f"复位阶段失败: {out_down}"
+
+        msg = f"接口 {if_index} 完成跃点微调抖动 ({base_metric}->{jiggle_metric}->{base_metric})"
+        logger.info(msg)
+        return True, msg
+
+    except Exception as e:
+        error_msg = f"跃点微调抖动时发生异常: {type(e).__name__}: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
+

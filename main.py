@@ -109,7 +109,8 @@ if __name__ == "__main__":
     
     # ========== 第五步：配置应用属性 ==========
     app.setApplicationName("NetBooster")
-    app.setApplicationVersion("1.0.0")
+    app.setApplicationVersion("1.1.0")
+
     app.setStyle("Fusion")
     
     # ========== 第六步：创建并显示主窗口（工厂函数模式）==========

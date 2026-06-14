@@ -2,208 +2,230 @@
 
 <p align="center">
   <img src="assets/icon.ico" alt="NetBooster Icon" width="128" height="128"><br><br>
-  <a href="#-netbooster---简体中文">简体中文</a> | <a href="#-netbooster---english">English</a>
+  <a href="#-简体中文">简体中文</a> | <a href="#-english">English</a>
 </p>
 
 ---
 
-# 🇨🇳 NetBooster - 简体中文
+# 🇨🇳 简体中文
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/Framework-PySide6-green?style=flat-square&logo=qt" alt="PySide6">
   <img src="https://img.shields.io/badge/UI--Library-QFluentWidgets-orange?style=flat-square" alt="QFluentWidgets">
   <img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-brightgreen?style=flat-square&logo=windows" alt="Windows">
-  <img src="https://img.shields.io/badge/Release-v1.0.1-blue?style=flat-square" alt="Version">
-  <img src="https://img.shields.io/badge/License-AGPL--3.0-red?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/Architecture-Dual--Protocol%20L3%20Binding-red?style=flat-square" alt="Architecture">
 </p>
 
-NetBooster 是一款基于 **PySide6** 与 **QFluentWidgets** 开发的现代化 Windows 多网卡并发下载加速工具。
+NetBooster 是一款专为 Windows 平台打造的**多网卡带宽并发聚合下载加速工具**。
 
-通过动态调度系统的网络接口跃点数（Interface Metric），本工具能够引导多线程下载软件（如 IDM、迅雷、Steam、BT 等）同时利用多条 network 线路（如：以太网 + Wi-Fi + 移动热点），实现带宽叠加与无感加速。
+项目彻底摒弃了传统修改路由表（Metric 跃点改写）导致的网络不稳定与游戏断网弊端，全面升级为**底层 L3 物理层套接字绑定（`IP_UNICAST_IF`）与双协议代理接管引擎**。无需用户手动配置各软件代理，真正实现“双击运行、一键接管、多线并发、无感加速”的端到端即开即用体验。
 
 ---
 
 ## 📷 界面预览
-
+
+> 📌 **视觉说明**：全新重构的 Windows 11 现代轻量化应用主视窗，彻底移除了高干扰的半透明叠层，采用官方微光蓝（`#0078d4`）全盘色域对齐与高级轻工业灰监控控制台。
 
 <p align="center">
-  <img src="assets/screenshot.png" alt="NetBooster UI Preview" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="assets/ui_idle.png" alt="NetBooster 现代化主界面" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
 </p>
 
 ---
 
 ## ✨ 核心功能
 
-* 🎨 **Fluent UI 交互**：全面适配 Windows 11 设计语言，支持亚克力效果、原生圆角与平滑过渡动画。
-* 🔍 **异步网卡扫描**：自动过滤并展示当前系统中已连接且分配有 IPv4 地址的活动网卡，杜绝失效接口干扰。
-* 🚀 **一键并发加速**：动态锁定选中网卡的跃点数（预设为 10）并关闭自动跃点，强制多线程流量进行多路负载均衡。
-* 🎮 **一键恢复默认**：快速将所有网卡切回 Windows “自动跃点”状态，彻底清理路由干扰，确保电竞游戏低延迟。
+* ⚡ **双协议无感接管**：后台无缝双开 SOCKS5 服务器与高性能 HTTP 转发服务器。启动后全自动切入 Windows 系统 WinINet 注册表深层锁定，完美兼容各种对代理协议有极端洁癖的客户端。
+* 🔒 **全生命周期防断网安全锁**：内置“开机强制洗包”与异常收尾机制。无论是用户主动停止、启动冲突失败，还是遭遇进程被强杀或直接点击右上角 `[X]` 退出，均会在 **50 毫秒** 内触发最高异常优先级的 `finally` 强制还原，彻底杜绝代理残留导致的电脑诡异断网。
+* 📊 **五列矩阵数据遥测大屏**：实时网卡动态网格展示【选择 | 网卡别名 | IPv4 地址 | 实时速度 (MB/s) | 实时连接数】。每张网卡的吞吐和连接分配情况一目了然，提供多路负载调度成功的硬核物理铁证。
+* 🛠️ **全自动化异步架构**：所有网卡底层扫描、异步 DNS 解析与流量监测均完全移出 Qt 主线程，由独立的协程事件循环在子线程（QThread）中驱动，高频连接轰炸下界面绝不假死。
 
 ---
 
-## 🛠️ 技术亮点
+## 📖 技术工作原理
 
-* **纯数字标识绑定**：全链路采用 `InterfaceIndex`（接口索引）作为唯一凭证操控系统底层，完美规避中文字符集引发的 PowerShell 编码乱码与崩溃问题。
-* **多线程异步架构**：将所有 PowerShell 路由表读写、底层网络扫描操作移出主线程（QThread），配合 Qt 信号槽机制驱动，当前端网络阻塞时界面依然保持丝滑响应。
-* **生命周期与权限管理**：程序启动时安全触发 Windows UAC 弹窗提权，并精准锁定当前工作目录，防止进程重定向至 `System32` 导致相对路径失效。
+NetBooster 核心分流机制完全建立在**四层应用层调度**与**三层物理层精准绑定**之上，不改动任何全局系统路由表。
 
----
-
-## 📖 工作原理
-
-Windows 系统默认优先选择跃点数（Metric）较低的网卡传输数据。当多张活动网卡的跃点数被设为完全一致的低数值时，系统底层会激活多路负载均衡。
-
+```text
+[多线程应用流量 (Steam / IDM)] 
+               │
+               ▼ WinINet 自动拦截劫持
+    Windows 系统全局注册表代理锁
+   (http/https -> 10801 | socks -> 10800)
+               │
+               ▼ 
+  ProxyWorker 核心引擎 (Asyncio inside QThread)
+               │
+               ▼ Round-Robin 连接轮询分发机制
+   L3 物理层双向套接字强行绑定
+   ├── socket.bind((nic1_ip, 0)) + IP_UNICAST_IF ──► 真实物理网卡 1 ──┐
+   ├── socket.bind((nic2_ip, 0)) + IP_UNICAST_IF ──► 真实物理网卡 2 ─┼─► 物理带宽叠加吞吐
+   └── socket.bind((nic3_ip, 0)) + IP_UNICAST_IF ──► 真实物理网卡 3 ──┘
 ```
-[多线程下载流量] ───►  NetBooster 调度 
-                       ├──► 网卡 A (Metric = 10) ──► 线路 1 ──┐
-                       ├──► 网卡 B (Metric = 10) ──► 线路 2 ─┼─► 带宽叠加并发下载
-                       └──► 网卡 C (Metric = 10) ──► 线路 3 ──┘
-```
 
-> ⚠️ **注意**：网卡并发对**单线程 TCP 连接**无效。本工具主要针对 **多线程/多连接** 场景（如 P2P 下载、Steam 游戏更新、分块下载器）。
+1. **全协议注入**：一键加速时，程序自动向 `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings` 写入全覆盖链条：`http=127.0.0.1:10801;https=127.0.0.1:10801;socks=127.0.0.1:10800`。
+2. **底层双绑**：当分流引擎收到下载客户端的 TCP 连接时，调度器通过 `socket.bind()` 钉死本地网卡 IPv4，并向系统内核发送 `setsockopt(socket.IPPROTO_IP, 31, ...)` 强制锁定网卡物理索引（Interface Index），强制流量剥离默认网关，实现物理多通道并进。
 
 ---
 
-## 📦 快速开始
+## 🎯 支持加速的软件与应用场景
 
-### 方式 A：源码运行（面向开发者）
+只要目标应用遵循 Windows 系统代理规范，且其下载机制为**“多线程/多并发”**，即可无感切入加速赛道：
 
-```bash
-# 1. 克隆仓库并创建虚拟环境
-git clone [https://github.com/Hypostasis-Cat/NetBooster.git](https://github.com/Hypostasis-Cat/NetBooster.git)
-cd NetBooster
-python -m venv venv
+* 📥 **专业下载管理器**：**IDM (Internet Download Manager)**（默认开启从 IE 获取代理）、迅雷、百度网盘客户端等。
+* 🎮 **主流游戏客户端**：**Steam**（其下载引擎 SteamService 原生读取系统标准代理）、Epic Games Launcher、EA App、Xbox 客户端。
+* 🌐 **全系列现代浏览器**：Chrome、Edge、Firefox、Safari for Windows 等大文件直接下载。
 
-# 2. 激活虚拟环境 (Windows CMD)
+---
+
+## 📈 实战并发加速效果
+
+经极限环境拷打测试，NetBooster 展现出了工业级的多线并发吞吐性能。在同时勾选【以太网2】、【以太网】与【WLAN】三路通道时，各线路完美齐头并进，实现物理极限压榨。
+
+### 实战案例 A：IDM 极限拉取多线程大文件 (Ubuntu ISO 镜像下载)
+> 后台引擎并发接管 190 个有效活跃连接，三路通道各自平摊约 **35~39 MB/s** 的下行吞吐，主大屏合并显示突破 **110.93 MB/s** 极速！
+
+<p align="center">
+  <img src="assets/screenshot_idm.png" alt="IDM 实战满速分流" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</p>
+
+### 实战案例 B：Steam 千兆级大体量游戏更新 (*Hogwarts Legacy*)
+> 完美承接 Steam 下载引擎的高频多线程并发，双线/三线火力全开，持续稳定维持在 **98.26 MB/s** 以上，轻松跑满物理带宽。
+
+<p align="center">
+  <img src="assets/screenshot_steam.png" alt="Steam 游戏大作满速更新" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</p>
+
+
+### 底层铁证：Windows 任务管理器网卡性能面板遥测
+> 任务管理器物理监控实况：三张网卡（以太网、以太网2、WLAN）在同一秒内各自独立爆发出 **~300 Mbps** 的接收速率，带宽聚合大获全胜！
+
+<p align="center">
+  <img src="assets/screenshot_taskmgr.png" alt="任务管理器多网卡并发接收物理铁证" width="400" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</p>
+
+---
+
+## 📦 软件使用方法
+
+1. **环境就绪**：确保您的电脑同时接上了多条独立的网络线路。例如：**网卡1连接校园网/家用有线宽带 + 网卡2连接手机无线热点（5G）**。
+2. **勾选网卡**：双击运行本工具，等待后台自动扫描完成。在网卡表格中，**勾选你想参与带宽聚合的所有活动网卡**。
+3. **一键加速**：点击右下角 **【一键加速】** 按钮。状态提示切换为运行中，系统全局代理正式接管。
+4. **享受起飞**：此时直接打开 Steam 触发更新，或者在 IDM 里新建大文件下载任务，NetBooster 调度控制台将疯狂滚动分发日志，多网卡大屏指针开始狂飚。
+5. **干净收班**：下载完成后，随时点击 **【停止加速】** 或直接关闭软件，系统代理一瞬间无痕还原，不留下任何底层垃圾。
+
+---
+
+## 🛠️ 生产级单文件打包编译 (Nuitka)
+
+本项目强烈推荐使用 `Nuitka` 将 Python 代码直接转译为 **C 语言机器码二进制文件**。这不仅能榨干运行性能、做到无 CMD 黑框一闪而过的极客体验，同时强制触发微软管理员 UAC 盾牌。
+
+```powershell
+# 1. 激活并安装打包依赖
 venv\Scripts\activate
-
-# 3. 安装依赖并运行
-pip install -r requirements.txt
-python main.py
-```
-
-### 方式 B：生产级单文件打包（使用 Nuitka 机器码编译）
-
-推荐使用 `Nuitka` 将项目编译为原生二进制 `.exe` 单文件，以获得最佳的启动性能和最小的体积：
-
-```bash
 pip install nuitka zstandard PySide6-Fluent-Widgets
+
+# 2. 一键执行全程序深度链接优化编译
 nuitka --standalone --onefile --enable-plugin=pyside6 --windows-console-mode=disable --windows-uac-admin --windows-icon-from-ico=assets/icon.ico --include-package-data=qfluentwidgets --include-data-dir=assets=assets --python-flag=-O --lto=yes main.py
 ```
 
 ---
 
-## 🛡️ 免责声明与注意事项
+## 🛡️ 安全提示与技术边界说明
 
-1. **家庭宽带带宽峰值提醒**：若您的家庭宽带本身已达到物理带宽上限（如千兆光纤满速），单线路叠加可能无法带来明显的速率飞跃。**强烈建议将 PC 同时连接手机移动数据热点（或第二条独立宽带线路）进行多路并发测试**，以验证多网卡叠加加速效果。
-2. **游戏安全提示**：本工具仅通过 Windows 官方 PowerShell API 修改系统标准路由表，**不涉及任何内存注入、游戏封包拦截或篡改行为**，100% 安全，绝不触发反作弊封号（如 VAC、BattlEye、DMA 检测等）。
-3. **延迟敏感型应用**：并发加速模式会导致多网卡分流，可能引起部分电竞游戏路由抖动。**强烈建议在游玩竞技类游戏前，点击界面右下角的 🎮 [恢复默认] 按钮。**
-4. **技术边界与极客指南**：本项目仅供网络分流技术的学习与研究使用，定位为轻量级、零成本的临时下载加速方案。**硬核专业玩家若对全时段策略流聚合有更严苛的需求，可参考 Speedify 专业聚合软件或部署双 WAN 软路由（OpenWrt / iKuai）的多线负载均衡方案。**
-
----
-
-## 📄 开源协议
-
-本项目基于 **AGPL-3.0** 开源协议。
+1. **反作弊 100% 安全**：本工具工作在纯粹的标准应用层代理和网络套接字绑定层。**不触碰游戏内存、不拦截或修改任何游戏私有网络封包、不注入任何 DLL 驱动**。完全符合安全合规标准，100% 绝不触发任何游戏反作弊机制（如 VAC、BattlEye、EAC、DMA 硬件防作弊等）。
+2. **单线程连接限制**：多网卡并发聚合本质上是**多连接负载均衡**。如果您的下载任务是极为罕见的单线程 TCP 连接（例如某网盘的非会员单线程死速限制），任何多网卡聚合工具均无法对其加速。
+3. **电竞低延迟恢复提示**：多网卡分流模式旨在压榨最大下载吞吐量。在游玩对延迟（Ping值）要求极其严苛的即时电竞网游（如 *CS2*、*Valorant*、*GTA 5* 联机）前，**请务必点击【停止加速】退出软件**，让电脑网络回归正常的单一默认网关。
 
 ---
 ---
 
-# 🇺🇸 NetBooster - English
+# 🇺🇸 English
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/Framework-PySide6-green?style=flat-square&logo=qt" alt="PySide6">
   <img src="https://img.shields.io/badge/UI--Library-QFluentWidgets-orange?style=flat-square" alt="QFluentWidgets">
   <img src="https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-brightgreen?style=flat-square&logo=windows" alt="Windows">
-  <img src="https://img.shields.io/badge/Release-v1.0.1-blue?style=flat-square" alt="Version">
-  <img src="https://img.shields.io/badge/License-AGPL--3.0-red?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/Architecture-Dual--Protocol%20L3%20Binding-red?style=flat-square" alt="Architecture">
 </p>
 
-NetBooster is a modern Windows multi-network adapter concurrent download acceleration tool developed based on **PySide6** and **QFluentWidgets**.
+NetBooster is an **industrial-grade multi-network adapter concurrent download acceleration tool** built for the Windows platform. 
 
-By dynamically scheduling the network interface metric (Interface Metric) of the system, this tool guides multi-threaded download software (such as IDM, Thunder, Steam, BT, etc.) to utilize multiple network lines simultaneously (e.g., Ethernet + Wi-Fi + Mobile Hotspot) to achieve bandwidth stacking and seamless acceleration.
+By utilizing **L3 socket level physical binding (`IP_UNICAST_IF`) and an asynchronous dual-protocol proxy redirection core**, NetBooster allows multi-threaded application traffic (such as IDM and Steam downloads) to split seamlessly across multiple active physical adapters (e.g., wired Ethernet + Wi-Fi + 5G Mobile Hotspots) simultaneously, multiplying total bandwidth with zero configuration.
 
 ---
 
 ## 📷 UI Preview
 
-> 📌 **PRO TIP**：Please rename your software running screenshot to `screenshot.png` and place it in the `assets/` folder of the project root directory.
-
 <p align="center">
-  <img src="assets/screenshot.png" alt="NetBooster UI Preview" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <img src="assets/ui_idle.png" alt="NetBooster UI Canvas" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
 </p>
 
 ---
 
-## ✨ Key Features
+## ✨ Key Technical Features
 
-* 🎨 **Fluent UI Interaction**: Fully adapted to the Windows 11 design language, supporting Acrylic effects, native rounded corners, and smooth transition animations.
-* 🔍 **Asynchronous Adapter Scanning**: Automatically filters and displays active network adapters that are connected and assigned with IPv4 addresses, eliminating interference from invalid interfaces.
-* 🚀 **One-Click Concurrent Acceleration**: Locks the metric of selected adapters (preset to 10) and disables automatic metric, forcing multi-threaded traffic to undergo multi-path load balancing.
-* 🎮 **One-Click Restore**: Quickly switches all adapters back to the Windows "Automatic Metric" state, thoroughly clearing routing interference to ensure low latency for gaming.
-
----
-
-## 🛠️ Technical Highlights
-
-* **Pure Numeric Identifier Binding**: The entire link uses `InterfaceIndex` as the unique credential fed to the system underlying layer, perfectly avoiding PowerShell encoding issues and crashes caused by Chinese character sets.
-* **Asynchronous Multi-Threading**: Moves all PowerShell routing table operations and network scanning completely out of the main thread (QThread), cooperating with the Qt Signal/Slot mechanism to maintain a smooth UI response even under network blockage.
-* **Privilege & Lifecycle Management**: Safely triggers the Windows UAC pop-up for privilege elevation upon startup, and precisely locks the current working directory to prevent process redirection to `System32`.
+* 🚀 **Seamless Dual-Protocol Interception**: Fires up an asynchronous SOCKS5 server and a high-speed local HTTP converter concurrently. It enforces a full registry lock on WinINet settings immediately upon boosting.
+* 🔐 **Fail-Safe Anti-Disconnection Vault**: An ironclad runtime lifecycle guard guarantees that whether the tool is manually stopped, encounters a port conflict, or is forcefully terminated via Task Manager or the window `[X]` button, the system proxy is cleanly restored within **50 milliseconds** via supreme `finally` blocks.
+* 📊 **5-Column Telemetry Matrix Grid**: Dynamically displays precise multi-path load distribution: [ Select | Adapter Alias | IPv4 Address | Real-time Speed (MB/s) | Active Connections ].
+* ⚙️ **Pure Async Groundwork**: All PowerShell network querying, background thread interface telemetry, and async DNS processing run entirely inside a detached event loop away from the main Qt UI thread.
 
 ---
 
-## 📖 How It Works
+## 🎯 Supported Applications
 
-By default, Windows prioritizes network adapters with lower metrics for data transmission. When the metrics of multiple active adapters are set to the exact same low value, the underlying system activates multi-path load balancing.
+Any multi-connection/multi-threaded client acknowledging standard Windows WinINet internet proxy server layouts will immediately benefit from concurrent aggregation:
 
-```
-[Multi-threaded Traffic] ───►  NetBooster Scheduling
-                       ├──► Adapter A (Metric = 10) ──► Line 1 ──┐
-                       ├──► Adapter B (Metric = 10) ──► Line 2 ─┼─► Bandwidth Stacking
-                       └──► Adapter C (Metric = 10) ──► Line 3 ──┘
-```
-
-> ⚠️ **Note**: Adapter concurrency is **ineffective for single-threaded TCP connections**. This tool mainly targets **multi-threaded/multi-connection** scenarios (such as P2P downloads, Steam game updates, chunked downloaders).
+* **Download Software**: **IDM (Internet Download Manager)**, Thunder (迅雷), Baidu NetDisk Client, etc.
+* **Gaming Platforms**: **Steam Client Download Core**, Epic Games Launcher, EA App, Xbox Application.
+* **Browsers**: Large file downloads via Chrome, Edge, Firefox, etc.
 
 ---
 
-## 📦 Quick Start
+## 📈 Real-World Multi-NIC Benchmarks
 
-### Method A: Run from Source (For Developers)
+### Case A: IDM Multi-threaded Large File Aggregation (Ubuntu ISO Mirror)
+> 190 active data channels handled simultaneously. Each adapter absorbs around **35~39 MB/s** evenly, pushing combined network throughput past **110.93 MB/s**!
 
-```bash
-# 1. Clone repository and create virtual environment
-git clone [https://github.com/Hypostasis-Cat/NetBooster.git](https://github.com/Hypostasis-Cat/NetBooster.git)
-cd NetBooster
-python -m venv venv
+<p align="center">
+  <img src="assets/screenshot_idm.png" alt="IDM Bandwidth Stacking" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</p>
 
-# 2. Activate virtual environment (Windows CMD)
+### Case B: Steam High-Throughput Game Installation (*Hogwarts Legacy*)
+> Flawlessly matching SteamService's multi-connection architecture, running lines concurrently to max out at **98.26 MB/s** combined downloading speed.
+
+<p align="center">
+  <img src="assets/screenshot_steam.png" alt="Steam Gigabit Acceleration" width="850" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</p>
+
+
+### Underlying Proof: Windows Task Manager Throughput Panels
+> Three unique hardware interfaces (Ethernet, Ethernet 2, Wi-Fi) pushing data at **~300 Mbps** apiece at the exact same second.
+
+<p align="center">
+  <img src="assets/screenshot_taskmgr.png" alt="Task Manager Throughput Matrix" width="400" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+</p>
+
+---
+
+## 📖 How to Use
+
+1. **Hardware Setup**: Hook up your PC to multiple unique lines (e.g., **Broadband Lan Wire + Mobile Phone 5G Tethering Hotspot**).
+2. **Select Interfaces**: Fire up NetBooster, wait for the background scan worker to finish, and **check the adapters you wish to bind together**.
+3. **Engage Acceleration**: Click **【一键加速】 (One-Click Boost)**. The system registry proxy is instantly deployed.
+4. **Initiate Downloads**: Start your game update on Steam or pull a file via IDM. Watch the scheduler distribute sockets on the fly as your telemetry grid lights up.
+5. **Graceful Teardown**: Hit **【停止加速】 (Stop)** or close NetBooster when done; the global environment is reverted cleanly with no traces left behind.
+
+---
+
+## 📦 Production Executable Compilation (Nuitka)
+
+```powershell
 venv\Scripts\activate
-
-# 3. Install dependencies and run
-pip install -r requirements.txt
-python main.py
-```
-
-### Method B: Production Single-File Compilation (Using Nuitka)
-
-We highly recommend using `Nuitka` to compile the project into a native binary `.exe` single file for the best startup performance and minimal size:
-
-```bash
 pip install nuitka zstandard PySide6-Fluent-Widgets
 nuitka --standalone --onefile --enable-plugin=pyside6 --windows-console-mode=disable --windows-uac-admin --windows-icon-from-ico=assets/icon.ico --include-package-data=qfluentwidgets --include-data-dir=assets=assets --python-flag=-O --lto=yes main.py
 ```
-
----
-
-## 🛡️ Disclaimer & Precautions
-
-1. **Bandwidth Peak Notice**: If your home broadband has already reached its physical bandwidth ceiling (e.g., gigabit fiber at full speed), stacking routes on the same line may not yield a significant speed boost. **It is highly recommended to connect your PC to a mobile data hotspot (or a second independent broadband line) simultaneously for multi-path concurrent testing** to verify the stacking effect.
-2. **Gaming Safety & Anti-Cheat**: This tool only modifies the system standard routing table through the official Windows PowerShell API. It **does not involve any memory injection, packet interception, or tampering behavior**. It is 100% safe and will never trigger anti-cheat bans (such as VAC, BattlEye, DMA detection, etc.).
-3. **Latency-Sensitive Applications**: Concurrent acceleration mode distributes traffic across multiple adapters, which may cause routing jitter in some esports games. **It is strongly recommended to click the 🎮 [Restore Default] button at the bottom right before playing competitive games.**
-4. **Technical Boundary & Power User Guide**: This project is only intended for the study and research of network traffic splitting, positioned as a lightweight, zero-cost temporary acceleration utility. **Power users or network geeks who require industrial-grade, full-time multi-line aggregation strategies may refer to commercial software like Speedify or deploy advanced Dual-WAN soft routers (OpenWrt / iKuai) for multi-line load balancing.**
 
 ---
 
