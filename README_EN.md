@@ -178,9 +178,20 @@ HypoMux is an open-source project driven purely by technical passion, independen
 > Please leave your nickname when sponsoring!
 
 <div align="center">
-  <img src="./assets/Support/wechat_pay.png" alt="WeChat Sponsorship QR Code" width="300" />
-  <br />
-  <sub>WeChat Sponsorship (Please note: HypoMux Support)</sub>
+  <table>
+    <tr>
+      <td align="center" width="320">
+        <img src="support/wei.png" alt="WeChat Sponsorship QR Code" width="260" />
+        <br />
+        <sub>WeChat Sponsorship (Please note: HypoMux Support)</sub>
+      </td>
+      <td align="center" width="320">
+        <img src="support/zhi.jpg" alt="Alipay Sponsorship QR Code" width="260" />
+        <br />
+        <sub>Alipay Sponsorship (Please note: HypoMux Support)</sub>
+      </td>
+    </tr>
+  </table>
 </div>
 
 

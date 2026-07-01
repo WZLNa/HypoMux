@@ -187,9 +187,20 @@ HypoMux 是一个完全出于技术热情、由作者在业余时间独立开发
 > 赞助请留下您的昵称！
 
 <div align="center">
-  <img src="./assets/Support/wechat_pay.png" alt="微信赞赏码" width="300" />
-  <br />
-  <sub>微信号赞赏（请备注：HypoMux 支持）</sub>
+  <table>
+    <tr>
+      <td align="center" width="320">
+        <img src="support/wei.png" alt="微信赞赏码" width="260" />
+        <br />
+        <sub>微信赞赏（请备注：HypoMux 支持）</sub>
+      </td>
+      <td align="center" width="320">
+        <img src="support/zhi.jpg" alt="支付宝赞赏码" width="260" />
+        <br />
+        <sub>支付宝赞赏（请备注：HypoMux 支持）</sub>
+      </td>
+    </tr>
+  </table>
 </div>
 
 
