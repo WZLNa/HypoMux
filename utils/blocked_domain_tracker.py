@@ -139,40 +139,43 @@ class BlockedDomainTracker:
         verify_port = port if port > 0 else 443
 
         async def _verify():
-            success_count = 0
-            for attempt in range(_VERIFY_RETRIES):
-                candidates = [n for n in all_nics if n.get("name") != nic_name]
-                if not candidates:
-                    break
-                test_nic = candidates[attempt % len(candidates)]
-                logger.info(
-                    f"[被墙检测] 第 {attempt + 1}/{_VERIFY_RETRIES} 次验证: "
-                    f"用 [{test_nic.get('name')}] 测试 {domain}:{verify_port}"
-                )
-                ok = await self._test_connect(test_nic, domain, verify_port, loop)
-                if ok:
-                    success_count += 1
+            try:
+                success_count = 0
+                for attempt in range(_VERIFY_RETRIES):
+                    candidates = [n for n in all_nics if n.get("name") != nic_name]
+                    if not candidates:
+                        break
+                    test_nic = candidates[attempt % len(candidates)]
+                    logger.info(
+                        f"[被墙检测] 第 {attempt + 1}/{_VERIFY_RETRIES} 次验证: "
+                        f"用 [{test_nic.get('name')}] 测试 {domain}:{verify_port}"
+                    )
+                    ok = await self._test_connect(test_nic, domain, verify_port, loop)
+                    if ok:
+                        success_count += 1
+                    else:
+                        logger.info(
+                            f"[被墙检测] 验证中断: [{test_nic.get('name')}] 也无法连接 {domain}，"
+                            f"非单网卡被墙，不加入黑名单"
+                        )
+                        break
+
+                confirmed = success_count >= _VERIFY_RETRIES
+                if confirmed:
+                    with self._lock:
+                        self._blocked.setdefault(nic_name, set()).add(domain)
+                    logger.info(
+                        f"[被墙确认] 网卡 [{nic_name}] 无法访问 {domain}（其他网卡 {_VERIFY_RETRIES} 次验证全部成功）"
+                    )
                 else:
                     logger.info(
-                        f"[被墙检测] 验证中断: [{test_nic.get('name')}] 也无法连接 {domain}，"
-                        f"非单网卡被墙，不加入黑名单"
+                        f"[被墙检测] 验证完成: [{nic_name}] -> {domain} 未确认被墙"
                     )
-                    break
-
-            confirmed = success_count >= _VERIFY_RETRIES
-            if confirmed:
+            except Exception as e:
+                logger.warning(f"[被墙检测] 验证异常: [{nic_name}] -> {domain}: {type(e).__name__}: {e}")
+            finally:
                 with self._lock:
-                    self._blocked.setdefault(nic_name, set()).add(domain)
-                logger.info(
-                    f"[被墙确认] 网卡 [{nic_name}] 无法访问 {domain}（其他网卡 {_VERIFY_RETRIES} 次验证全部成功）"
-                )
-            else:
-                logger.info(
-                    f"[被墙检测] 验证完成: [{nic_name}] -> {domain} 未确认被墙"
-                )
-
-            with self._lock:
-                self._pending_verifications.get(nic_name, set()).discard(domain)
+                    self._pending_verifications.get(nic_name, set()).discard(domain)
 
         asyncio.ensure_future(_verify(), loop=loop)
 
@@ -248,6 +251,15 @@ class BlockedDomainTracker:
     async def _resolve_via_public_dns(domain: str, nic: Dict, loop: asyncio.AbstractEventLoop) -> str:
         """通过指定网卡向 223.5.5.5 发送 DNS A 查询，绕过系统 DNS。"""
         import random
+
+        def _skip_name(data: bytes, offset: int) -> int:
+            """跳过 DNS 名称（标签链或压缩指针）。返回指向名称结束后的偏移。"""
+            while offset < len(data) and data[offset] != 0:
+                if data[offset] & 0xC0:
+                    return offset + 2  # 压缩指针 2 字节，名称到此结束
+                offset += 1 + data[offset]
+            return offset + 1  # 跳过 \x00 终止符
+
         query_id = random.randint(0, 0xFFFF)
         labels = domain.rstrip(".").encode("idna").split(b".")
         question = b"".join(bytes([len(label)]) + label for label in labels) + b"\x00"
@@ -278,24 +290,16 @@ class BlockedDomainTracker:
 
             offset = 12
             for _ in range(qdcount):
-                while offset < len(data) and data[offset] != 0:
-                    if data[offset] & 0xC0:
-                        offset += 2
-                        break
-                    offset += 1 + data[offset]
-                offset += 5
+                offset = _skip_name(data, offset)
+                offset += 4  # TYPE(2) + CLASS(2)
 
             for _ in range(ancount):
-                while offset < len(data) and data[offset] != 0:
-                    if data[offset] & 0xC0:
-                        offset += 2
-                        break
-                    offset += 1 + data[offset]
-                offset += 1
+                offset = _skip_name(data, offset)
                 if offset + 10 > len(data):
                     break
-                rtype, rclass, rdlen = struct.unpack("!HHI", data[offset:offset + 8])
-                offset += 8
+                # RR 固定头部: TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2) = 10 字节
+                rtype, rclass, _ttl, rdlen = struct.unpack("!HHIH", data[offset:offset + 10])
+                offset += 10
                 if rtype == 1 and rclass == 1 and rdlen == 4 and offset + 4 <= len(data):
                     return socket.inet_ntoa(data[offset:offset + 4])
                 offset += rdlen
@@ -325,8 +329,6 @@ class BlockedDomainTracker:
             logger.warning(f"加载被墙域名清单失败: {e}")
 
     def save(self):
-        if not self._enabled:
-            return
         try:
             _PERSIST_DIR.mkdir(parents=True, exist_ok=True)
             with self._lock:

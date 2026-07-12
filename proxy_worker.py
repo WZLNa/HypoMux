@@ -142,8 +142,10 @@ class RoundRobinBalancer:
                 self._current = (self._current + 1) % len(self.nics)
                 if not tracker.is_blocked(nic["name"], domain):
                     return nic
-            # 全部被墙，回退
-            return self.get_next_nic()
+            # 全部被墙，不回退 get_next_nic()（避免重入锁死锁），直接取下一张
+            nic = self.nics[self._current]
+            self._current = (self._current + 1) % len(self.nics)
+            return nic
 
     def on_connect(self, nic_name: str):
         with self._lock:
@@ -212,7 +214,12 @@ class WeightedBalancer:
         with self._lock:
             unblocked = [n for n in self.nics if not tracker.is_blocked(n["name"], domain)]
             if not unblocked:
-                return self.get_next_nic()
+                # 全部被墙，加权随机回退（不调用 get_next_nic() 避免重入锁死锁）
+                r = random.random()
+                for idx, nic in enumerate(self.nics):
+                    if r <= self._cdf[idx]:
+                        return nic
+                return self.nics[-1]
 
             total = sum(self._bandwidth.get(n["name"], 1) for n in unblocked)
             if total <= 0:

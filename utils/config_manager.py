@@ -89,6 +89,20 @@ def _looks_mojibake(value: str) -> bool:
     return any(marker in text for marker in ("�", "浠", "缃", "å", "ç", "Ã"))
 
 
+def _coerce_bool(value: Any, fallback: bool = False) -> bool:
+    """把任意值规整为 bool，兼容手改 config.json 写入的 "false" / "0" 等字符串。"""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        stripped = value.strip().lower()
+        if stripped in ("0", "false", "no", "off", ""):
+            return False
+        return True
+    return bool(fallback)
+
+
 def _coerce_config(raw: Any) -> Dict[str, Any]:
     """把任意来源的原始数据规整成合法配置字典。
 
@@ -129,11 +143,10 @@ def _coerce_config(raw: Any) -> Dict[str, Any]:
     cfg["doh_provider"] = raw_doh if raw_doh in VALID_DOH_PROVIDERS else DEFAULT_DOH_PROVIDER
 
     # blocked_domain_bypass：自动规避单网卡被墙域名
-    raw_bypass = raw.get("blocked_domain_bypass", True)
-    cfg["blocked_domain_bypass"] = bool(raw_bypass)
+    cfg["blocked_domain_bypass"] = _coerce_bool(raw.get("blocked_domain_bypass"), True)
 
     # weighted_scheduler：权重调度器开关
-    cfg["weighted_scheduler"] = bool(raw.get("weighted_scheduler", False))
+    cfg["weighted_scheduler"] = _coerce_bool(raw.get("weighted_scheduler"), False)
 
     # nic_bandwidth_limits：网卡带宽上限 {alias: mbps}
     raw_limits = raw.get("nic_bandwidth_limits")
