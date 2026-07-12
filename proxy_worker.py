@@ -289,8 +289,8 @@ class ProxyWorker(QThread):
         self._listen_port = listen_port
         self._http_port = http_port if http_port is not None else listen_port + 1
 
-        if use_weighted and bandwidth_limits:
-            self.balancer = WeightedBalancer(self._selected_nics, bandwidth_limits)
+        if use_weighted:
+            self.balancer = WeightedBalancer(self._selected_nics, bandwidth_limits or {})
         else:
             self.balancer = RoundRobinBalancer(self._selected_nics)
 
