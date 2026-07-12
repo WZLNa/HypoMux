@@ -224,9 +224,9 @@ HypoMux 是一个完全出于技术热情、由作者在业余时间独立开发
 
 <a href="https://www.star-history.com/?repos=Hypostasis-Cat%2FHypoMux&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&theme=dark&legend=top-left&sealed_token=chlrefBFmP-lcM91OVUBYY-HWQDuIyeAHctCG-0aJxGRIpPCdZRehSD4_BZAOquAFdlWyWET1FzwgnItWLaeBgBWMy1IKTtSPi5V9RF43xxk78Rjpd1tmilk9A5yu9fv3VBvrIxZrr7sgA4ARA6cq5rr4AHez4yrzFer9S6qyypotZ_ao67M1h9rm6OT" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=chlrefBFmP-lcM91OVUBYY-HWQDuIyeAHctCG-0aJxGRIpPCdZRehSD4_BZAOquAFdlWyWET1FzwgnItWLaeBgBWMy1IKTtSPi5V9RF43xxk78Rjpd1tmilk9A5yu9fv3VBvrIxZrr7sgA4ARA6cq5rr4AHez4yrzFer9S6qyypotZ_ao67M1h9rm6OT" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=chlrefBFmP-lcM91OVUBYY-HWQDuIyeAHctCG-0aJxGRIpPCdZRehSD4_BZAOquAFdlWyWET1FzwgnItWLaeBgBWMy1IKTtSPi5V9RF43xxk78Rjpd1tmilk9A5yu9fv3VBvrIxZrr7sgA4ARA6cq5rr4AHez4yrzFer9S6qyypotZ_ao67M1h9rm6OT" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&theme=dark&legend=top-left&sealed_token=OBA8Yn_VCL8hVFpap6IcXWyQ5Bf0zBWGI0HI_nRG6HJ2nwez4n8DokhW3zw9VIErCqI_OhgIP9IP-S5onk7bTdOTIZb7bcVyCXt8fe6J7kydbLQAJqX-f_fPBbc_G4xtjBccCXHUugrO9-GQ3A1FQdTPRIqMLcDW8vQQq14Aie5hWyeEgzNDXJ01OWUu" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=OBA8Yn_VCL8hVFpap6IcXWyQ5Bf0zBWGI0HI_nRG6HJ2nwez4n8DokhW3zw9VIErCqI_OhgIP9IP-S5onk7bTdOTIZb7bcVyCXt8fe6J7kydbLQAJqX-f_fPBbc_G4xtjBccCXHUugrO9-GQ3A1FQdTPRIqMLcDW8vQQq14Aie5hWyeEgzNDXJ01OWUu" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=OBA8Yn_VCL8hVFpap6IcXWyQ5Bf0zBWGI0HI_nRG6HJ2nwez4n8DokhW3zw9VIErCqI_OhgIP9IP-S5onk7bTdOTIZb7bcVyCXt8fe6J7kydbLQAJqX-f_fPBbc_G4xtjBccCXHUugrO9-GQ3A1FQdTPRIqMLcDW8vQQq14Aie5hWyeEgzNDXJ01OWUu" />
  </picture>
 </a>
 
