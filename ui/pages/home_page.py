@@ -583,4 +583,3 @@ class HomePage(QWidget):
 
     def get_bandwidth_limits(self) -> Dict[str, int]:
         return {alias: row.bandwidth_mbps for alias, row in self._cards.items()}
-        self.kernel_metric.set_mode(self._current_mode, self._engine_running)
