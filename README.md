@@ -220,13 +220,11 @@ HypoMux 是一个完全出于技术热情、由作者在业余时间独立开发
 
 随着新功能不断解锁，欢迎见证 HypoMux 的成长！
 
-## Star History
-
 <a href="https://www.star-history.com/?repos=Hypostasis-Cat%2FHypoMux&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&theme=dark&legend=top-left&sealed_token=OBA8Yn_VCL8hVFpap6IcXWyQ5Bf0zBWGI0HI_nRG6HJ2nwez4n8DokhW3zw9VIErCqI_OhgIP9IP-S5onk7bTdOTIZb7bcVyCXt8fe6J7kydbLQAJqX-f_fPBbc_G4xtjBccCXHUugrO9-GQ3A1FQdTPRIqMLcDW8vQQq14Aie5hWyeEgzNDXJ01OWUu" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=OBA8Yn_VCL8hVFpap6IcXWyQ5Bf0zBWGI0HI_nRG6HJ2nwez4n8DokhW3zw9VIErCqI_OhgIP9IP-S5onk7bTdOTIZb7bcVyCXt8fe6J7kydbLQAJqX-f_fPBbc_G4xtjBccCXHUugrO9-GQ3A1FQdTPRIqMLcDW8vQQq14Aie5hWyeEgzNDXJ01OWUu" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=OBA8Yn_VCL8hVFpap6IcXWyQ5Bf0zBWGI0HI_nRG6HJ2nwez4n8DokhW3zw9VIErCqI_OhgIP9IP-S5onk7bTdOTIZb7bcVyCXt8fe6J7kydbLQAJqX-f_fPBbc_G4xtjBccCXHUugrO9-GQ3A1FQdTPRIqMLcDW8vQQq14Aie5hWyeEgzNDXJ01OWUu" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&theme=dark&legend=top-left&sealed_token=TqDZoh8oANl5EOyQEV_OiCtR6pkXcRlH3EJEWuYR_VZq2Kuenl7rWWNzwKjvQjVFjahCDAL-e5Qcr0PqhEKIXMv1kyYwrH0xIWcn6A724P7r5jNz3Hqqg7XNtaPU3Rf2h4olUGuG0rLh54fUCS2zB_m5GSgH5uEP7jnJJQi7yxaGmGgC6JlI4M-hQiIC" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=TqDZoh8oANl5EOyQEV_OiCtR6pkXcRlH3EJEWuYR_VZq2Kuenl7rWWNzwKjvQjVFjahCDAL-e5Qcr0PqhEKIXMv1kyYwrH0xIWcn6A724P7r5jNz3Hqqg7XNtaPU3Rf2h4olUGuG0rLh54fUCS2zB_m5GSgH5uEP7jnJJQi7yxaGmGgC6JlI4M-hQiIC" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hypostasis-Cat/HypoMux&type=date&legend=top-left&sealed_token=TqDZoh8oANl5EOyQEV_OiCtR6pkXcRlH3EJEWuYR_VZq2Kuenl7rWWNzwKjvQjVFjahCDAL-e5Qcr0PqhEKIXMv1kyYwrH0xIWcn6A724P7r5jNz3Hqqg7XNtaPU3Rf2h4olUGuG0rLh54fUCS2zB_m5GSgH5uEP7jnJJQi7yxaGmGgC6JlI4M-hQiIC" />
  </picture>
 </a>
 
