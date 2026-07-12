@@ -5,7 +5,7 @@ HypoMux 单网卡被墙域名页 (BlockedDomainsPage) - 第五个导航选项卡
 删除单条记录、清空全部等管理功能。
 """
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QHeaderView
 from qfluentwidgets import (
     TableWidget, TitleLabel, BodyLabel, PushButton, TransparentPushButton,
@@ -18,6 +18,8 @@ from utils.blocked_domain_tracker import get_tracker
 
 class BlockedDomainsPage(QWidget):
     """单网卡被墙域名管理页。"""
+
+    settings_changed = Signal()
 
     COL_NIC = 0
     COL_DOMAIN = 1
@@ -127,16 +129,20 @@ class BlockedDomainsPage(QWidget):
         self._empty_hint.hide()
         self.tableWidget.show()
 
+        use_expiry = tracker.use_expiry
         for nic_name, domains in data.items():
             for domain in domains:
-                remaining = get_tracker().remaining_seconds(nic_name, domain)
-                if remaining >= 60:
-                    display_text = f"{domain} ({remaining // 60} 分后恢复)"
+                if not use_expiry:
+                    display_text = f"{domain} ({tr('blocked_permanent')})"
                 else:
-                    display_text = f"{domain} ({remaining} 秒后恢复)"
-                self._add_row(nic_name, display_text)
+                    remaining = tracker.remaining_seconds(nic_name, domain)
+                    if remaining >= 60:
+                        display_text = f"{domain} ({tr('blocked_expire_min', min=remaining // 60)})"
+                    else:
+                        display_text = f"{domain} ({tr('blocked_expire_sec', sec=remaining)})"
+                self._add_row(nic_name, domain, display_text)
 
-    def _add_row(self, nic_name: str, domain: str):
+    def _add_row(self, nic_name: str, domain: str, display_text: str):
         row = self.tableWidget.rowCount()
         self.tableWidget.insertRow(row)
         self.tableWidget.setRowHeight(row, self.ROW_HEIGHT)
@@ -146,7 +152,7 @@ class BlockedDomainsPage(QWidget):
         nic_label.setContentsMargins(8, 0, 0, 0)
         self.tableWidget.setCellWidget(row, self.COL_NIC, nic_label)
 
-        domain_label = BodyLabel(domain, self.tableWidget)
+        domain_label = BodyLabel(display_text, self.tableWidget)
         domain_label.setAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         domain_label.setContentsMargins(4, 0, 0, 0)
         self.tableWidget.setCellWidget(row, self.COL_DOMAIN, domain_label)
@@ -167,11 +173,13 @@ class BlockedDomainsPage(QWidget):
         tracker = get_tracker()
         tracker.enabled = checked
         tracker.save()
+        self.settings_changed.emit()
 
     def _on_expiry_changed(self, checked: bool):
         tracker = get_tracker()
         tracker.use_expiry = checked
         tracker.save()
+        self.settings_changed.emit()
         self._load_data()
 
     def _on_remove_domain(self, nic_name: str, domain: str):

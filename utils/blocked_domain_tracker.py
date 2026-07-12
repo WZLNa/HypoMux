@@ -172,20 +172,38 @@ class BlockedDomainTracker:
 
         async def _verify():
             try:
+                candidates = [n for n in all_nics if n.get("name") != nic_name]
+                if not candidates:
+                    return
+
+                # 快速否决：前 3 次全部失败 → 其他网卡也连不上，直接放弃
                 success_count = 0
-                for attempt in range(_VERIFY_RETRIES):
+                for attempt in range(3):
                     if attempt > 0:
                         await asyncio.sleep(_VERIFY_INTERVAL)
-                    candidates = [n for n in all_nics if n.get("name") != nic_name]
-                    if not candidates:
+                    test_nic = candidates[attempt % len(candidates)]
+                    self._emit_log(
+                        f"[被墙检测] 快速验证 {attempt + 1}/3: "
+                        f"用 [{test_nic.get('name')}] 测试 {domain}:{verify_port}"
+                    )
+                    if await self._test_connect(test_nic, domain, verify_port, loop):
+                        success_count = 1
                         break
+                else:
+                    self._emit_log(
+                        f"[被墙检测] 快速否决: 其他网卡也无法连接 {domain}，非单网卡被墙"
+                    )
+                    return
+
+                # 快速验证通过 → 其他网卡能通，跑满 5 次确认
+                for attempt in range(success_count, _VERIFY_RETRIES):
+                    await asyncio.sleep(_VERIFY_INTERVAL)
                     test_nic = candidates[attempt % len(candidates)]
                     self._emit_log(
                         f"[被墙检测] 第 {attempt + 1}/{_VERIFY_RETRIES} 次验证: "
                         f"用 [{test_nic.get('name')}] 测试 {domain}:{verify_port}"
                     )
-                    ok = await self._test_connect(test_nic, domain, verify_port, loop)
-                    if ok:
+                    if await self._test_connect(test_nic, domain, verify_port, loop):
                         success_count += 1
                         if success_count >= _VERIFY_MIN_SUCCESS:
                             break
@@ -195,9 +213,8 @@ class BlockedDomainTracker:
                         )
 
                 confirmed = success_count >= _VERIFY_MIN_SUCCESS
-                now = time.time()
                 if confirmed:
-                    expiry = now + _EXPIRY_SECONDS
+                    expiry = time.time() + _EXPIRY_SECONDS
                     with self._lock:
                         self._blocked.setdefault(nic_name, {})[domain] = expiry
                     self._emit_log(
@@ -213,7 +230,7 @@ class BlockedDomainTracker:
                 with self._lock:
                     self._pending_verifications.get(nic_name, set()).discard(domain)
 
-        asyncio.ensure_future(_verify(), loop=loop)
+        loop.create_task(_verify())
 
     async def _test_connect(
         self,
@@ -229,14 +246,22 @@ class BlockedDomainTracker:
         try:
             dst_addr = None
             dns_error = ""
+            # 目标本身是 IPv4 字面量时无需 DNS 解析，直接使用（IP 被墙检测路径）
             try:
-                addrs = await asyncio.wait_for(
-                    loop.getaddrinfo(domain, test_port, family=socket.AF_INET, type=socket.SOCK_STREAM),
-                    timeout=3.0,
-                )
-                dst_addr = addrs[0][4][0]
-            except Exception as e:
-                dns_error = f"系统DNS: {type(e).__name__}"
+                socket.inet_aton(domain)
+                dst_addr = domain
+            except OSError:
+                pass
+
+            if dst_addr is None:
+                try:
+                    addrs = await asyncio.wait_for(
+                        loop.getaddrinfo(domain, test_port, family=socket.AF_INET, type=socket.SOCK_STREAM),
+                        timeout=3.0,
+                    )
+                    dst_addr = addrs[0][4][0]
+                except Exception as e:
+                    dns_error = f"系统DNS: {type(e).__name__}"
 
             if dst_addr is None:
                 try:

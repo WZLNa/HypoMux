@@ -700,11 +700,12 @@ class ProxyWorker(QThread):
                     self.log_signal.emit(
                         f"[连通失败] 网卡: {nic['name']} 无法连接目标 {target_display}: {e}"
                     )
-                    # 触发被墙域名后台验证
-                    if dst_domain:
+                    # 触发被墙目标后台验证（域名或纯 IP 均检测）
+                    target_for_check = dst_domain or dst_addr
+                    if target_for_check:
                         get_tracker().on_connect_failure(
                             nic_name=nic["name"],
-                            domain=dst_domain,
+                            domain=target_for_check,
                             port=dst_port,
                             failed_nic=nic,
                             all_nics=self._selected_nics,
@@ -1759,7 +1760,7 @@ class MultiPortProxyWorker(QThread):
                 await self._start_udp_associate(reader, writer, balancer, channel)
                 return
 
-            nic = balancer.get_next_nic_for_domain(dst_domain) if dst_domain else balancer.get_next_nic()
+            nic = balancer.get_next_nic_for_domain(dst_domain or dst_addr)
             balancer.on_connect(nic["name"])
             if dst_domain:
                 try:
@@ -1791,10 +1792,11 @@ class MultiPortProxyWorker(QThread):
                     f"[出站池-{channel}][连通失败] {nic['name']} -> {target_display}:{dst_port} "
                     f"({dst_addr}) | {type(e).__name__}: {e}"
                 )
-                if dst_domain:
+                target_for_check = dst_domain or dst_addr
+                if target_for_check:
                     get_tracker().on_connect_failure(
                         nic_name=nic["name"],
-                        domain=dst_domain,
+                        domain=target_for_check,
                         port=dst_port,
                         failed_nic=nic,
                         all_nics=self._selected_nics,

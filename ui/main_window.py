@@ -423,6 +423,7 @@ def create_main_window():
 
             # 同步被墙域名自动规避开关到全局追踪器
             get_tracker().enabled = bool(self._app_config.get("blocked_domain_bypass", True))
+            get_tracker().use_expiry = bool(self._app_config.get("blocked_domain_expiry", True))
             # 将追踪器日志桥接到主窗口日志文件
             get_tracker().set_log_callback(self.append_log)
 
@@ -606,6 +607,8 @@ def create_main_window():
             self.settings_page.success_message.connect(self.show_success)
             self.settings_page.warning_message.connect(self.show_warning)
             self.settings_page.dns_changed.connect(self._on_dns_changed)
+            # 被墙域名页（开关变更即持久化到 config）
+            self.blocked_page.settings_changed.connect(self._persist_config)
 
             # 启动恢复：运行模式分段控件 + 路由规则表
             try:
@@ -712,6 +715,7 @@ def create_main_window():
                 "dns_server": self._app_config.get("dns_server", "223.5.5.5"),
                 "doh_provider": self._app_config.get("doh_provider", "auto"),
                 "blocked_domain_bypass": get_tracker().enabled,
+                "blocked_domain_expiry": get_tracker().use_expiry,
                 "weighted_scheduler": self.home_page.is_weighted_scheduler(),
                 "nic_bandwidth_limits": self.home_page.get_bandwidth_limits(),
             }
@@ -1113,7 +1117,7 @@ def create_main_window():
                 self.append_log(mw_tr("log_steam_running"))
 
             socks_port = int(self._app_config.get("socks_port", DEFAULT_SOCKS_PORT))
-            http_port = socks_port + 1
+            http_port = int(self._app_config.get("http_port", socks_port + 1))
             self._pending_socks_addr = f"127.0.0.1:{socks_port}"
             self._pending_http_addr = f"127.0.0.1:{http_port}"
             use_weighted = self.home_page.is_weighted_scheduler()
@@ -1347,7 +1351,6 @@ def create_main_window():
                 return
             self._shutdown_started = True
             try:
-                self._persist_config()
                 get_tracker().save()
             except Exception:
                 pass
@@ -1427,7 +1430,7 @@ def create_main_window():
             settings = QSettings("Hypostasis-Cat", "HypoMux")
             close_behavior = settings.value("close_behavior", "tray", type=str)
 
-            # 关闭前持久化配置
+            # 关闭前持久化配置（确保托盘收起也保存）
             self._persist_config()
 
             if close_behavior == "tray" and not self._force_exit:
