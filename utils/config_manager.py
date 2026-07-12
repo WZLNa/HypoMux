@@ -77,6 +77,10 @@ def default_config() -> Dict[str, Any]:
         "routing_rules": [],
         "dns_server": DEFAULT_DNS_SERVER,
         "doh_provider": DEFAULT_DOH_PROVIDER,
+        "blocked_domain_bypass": True,  # 自动规避单网卡被墙域名
+        "blocked_domain_expiry": True,  # 被墙黑名单自动过期
+        "weighted_scheduler": False,    # 权重调度器
+        "nic_bandwidth_limits": {},     # {nic_alias: mbps}
     }
 
 
@@ -84,6 +88,20 @@ def _looks_mojibake(value: str) -> bool:
     """识别旧打包版本写入的乱码网卡别名。"""
     text = str(value)
     return any(marker in text for marker in ("�", "浠", "缃", "å", "ç", "Ã"))
+
+
+def _coerce_bool(value: Any, fallback: bool = False) -> bool:
+    """把任意值规整为 bool，兼容手改 config.json 写入的 "false" / "0" 等字符串。"""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        stripped = value.strip().lower()
+        if stripped in ("0", "false", "no", "off", ""):
+            return False
+        return True
+    return bool(fallback)
 
 
 def _coerce_config(raw: Any) -> Dict[str, Any]:
@@ -124,6 +142,25 @@ def _coerce_config(raw: Any) -> Dict[str, Any]:
 
     raw_doh = str(raw.get("doh_provider", DEFAULT_DOH_PROVIDER)).strip().lower()
     cfg["doh_provider"] = raw_doh if raw_doh in VALID_DOH_PROVIDERS else DEFAULT_DOH_PROVIDER
+
+    # blocked_domain_bypass：自动规避单网卡被墙域名
+    cfg["blocked_domain_bypass"] = _coerce_bool(raw.get("blocked_domain_bypass"), True)
+
+    # blocked_domain_expiry：被墙黑名单自动过期开关
+    cfg["blocked_domain_expiry"] = _coerce_bool(raw.get("blocked_domain_expiry"), True)
+
+    # weighted_scheduler：权重调度器开关
+    cfg["weighted_scheduler"] = _coerce_bool(raw.get("weighted_scheduler"), False)
+
+    # nic_bandwidth_limits：网卡带宽上限 {alias: mbps}
+    raw_limits = raw.get("nic_bandwidth_limits")
+    if isinstance(raw_limits, dict):
+        cfg["nic_bandwidth_limits"] = {
+            str(k): int(v) for k, v in raw_limits.items()
+            if str(k) and isinstance(v, (int, float)) and int(v) > 0
+        }
+    else:
+        cfg["nic_bandwidth_limits"] = {}
 
     return cfg
 

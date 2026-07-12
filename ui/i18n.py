@@ -39,9 +39,6 @@ I18N_MAP = {
         "up_format": "上行 {value:.2f} MB/s",
         "conn_format": "总连接数 {value}",
 
-        # 控制台
-        "console_caption": "调度控制台",
-
         # 操作栏
         "select_all": "全选",
         "deselect_all": "取消全选",
@@ -112,6 +109,7 @@ I18N_MAP = {
         "nav_tools": "网络体检",
         "nav_settings": "系统设置",
         "nav_about": "关于",
+        "nav_blocked_domains": "单网卡被墙域名",
 
         # === 首页数据看板 ===
         "home_engine_title": "聚合分流引擎",
@@ -217,6 +215,32 @@ I18N_MAP = {
         "tray_show_main": "显示主界面",
         "tray_exit": "退出程序",
         "tray_tooltip": "HypoMux - 多网卡加速",
+
+        # === 单网卡被墙域名页 ===
+        "blocked_title": "单网卡被墙域名",
+        "blocked_hint": "当某网卡连接目标域名失败、但其他网卡可连通时，自动记录该域名为该网卡的黑名单。后续分流将自动规避。",
+        "blocked_enable": "启用自动分流清单",
+        "blocked_enable_hint": "开启后，与加速引擎捆绑生效；关闭后暂停规避功能",
+        "blocked_no_data": "暂无记录，在加速期间遇到连通失败的域名将在此显示",
+        "blocked_nic_label": "网卡",
+        "blocked_domain_count": "{count} 个被墙域名",
+        "blocked_delete_domain": "移除此域名",
+        "blocked_clear_all": "清空全部",
+        "blocked_verify_blocked": "已确认被墙",
+        "blocked_refresh": "刷新",
+
+        # === 单网卡被墙域名页 - 过期机制 ===
+        "blocked_expiry_toggle": "黑名单自动过期",
+        "blocked_expiry_hint": "开启后黑名单条目 30 分钟后自动恢复。关闭后条目永不自动移除。",
+        "blocked_permanent": "永久拦截",
+        "blocked_expire_min": "{min} 分后恢复",
+        "blocked_expire_sec": "{sec} 秒后恢复",
+
+        # === 权重调度器 ===
+        "home_weighted_toggle": "使用权重调度器",
+        "home_weighted_hint": "按各网卡调度权重做加权分配，权重越高分配越多连接。关闭则轮询均分。",
+        "home_bw_column": "调度权重 (Mbps)",
+        "home_bw_column_hint": "该数值仅作调度器计算权重之用，不对网卡限速",
     },
 
     "en": {
@@ -246,9 +270,6 @@ I18N_MAP = {
         "speed_caption": "Combined Download Speed (MB/s)",
         "up_format": "Up {value:.2f} MB/s",
         "conn_format": "Connections {value}",
-
-        # Console
-        "console_caption": "Dispatch Console",
 
         # Action bar
         "select_all": "Select All",
@@ -320,6 +341,7 @@ I18N_MAP = {
         "nav_tools": "Diagnostics",
         "nav_settings": "Settings",
         "nav_about": "About",
+        "nav_blocked_domains": "Blocked Domains",
 
         # === Home Dashboard ===
         "home_engine_title": "Aggregation Engine",
@@ -425,6 +447,32 @@ I18N_MAP = {
         "tray_show_main": "Show Main Panel",
         "tray_exit": "Exit",
         "tray_tooltip": "HypoMux - Multi-NIC Acceleration",
+
+        # === Blocked Domains Page ===
+        "blocked_title": "Per-NIC Blocked Domains",
+        "blocked_hint": "When a domain fails to connect on one NIC but works on others, it is automatically recorded as blocked for that NIC. Future connections will bypass the blocked NIC.",
+        "blocked_enable": "Enable Auto Bypass List",
+        "blocked_enable_hint": "Bundled with the acceleration engine; pause bypass when disabled",
+        "blocked_no_data": "No records yet. Domains that fail on some NICs during acceleration will appear here.",
+        "blocked_nic_label": "NIC",
+        "blocked_domain_count": "{count} blocked domain(s)",
+        "blocked_delete_domain": "Remove this domain",
+        "blocked_clear_all": "Clear All",
+        "blocked_verify_blocked": "Confirmed Blocked",
+        "blocked_refresh": "Refresh",
+
+        # === Blocked Domains Page - Expiry ===
+        "blocked_expiry_toggle": "Auto-Expire Blacklist",
+        "blocked_expiry_hint": "When enabled, blocked entries auto-recover after 30 min. When disabled, entries never expire automatically.",
+        "blocked_permanent": "Permanent",
+        "blocked_expire_min": "Recover in {min}m",
+        "blocked_expire_sec": "Recover in {sec}s",
+
+        # === Weighted Scheduler ===
+        "home_weighted_toggle": "Use Weighted Scheduler",
+        "home_weighted_hint": "Weighted distribution by NIC schedule weights. Higher weight gets more connections. Disable for equal round-robin.",
+        "home_bw_column": "Schedule Weight (Mbps)",
+        "home_bw_column_hint": "Used only for scheduler weight calculation, does NOT rate-limit the NIC",
     },
 }
 
