@@ -52,7 +52,8 @@ class BlockedDomainTracker:
         self._cooldown: Dict[str, Dict[str, float]] = {}
         self._pending_verifications: Dict[str, Set[str]] = {}
         self._enabled = True
-        self._use_expiry = True  # 用户可在 UI 中关闭过期机制
+        self._use_expiry = True
+        self._log_callback = None  # 可选：callable(str)，用于将日志输出到 UI 控制台
         self._load()
 
     @property
@@ -70,6 +71,19 @@ class BlockedDomainTracker:
     @use_expiry.setter
     def use_expiry(self, value: bool):
         self._use_expiry = bool(value)
+
+    def set_log_callback(self, callback):
+        """设置 UI 控制台日志回调，用于在界面调试控制台同步显示被墙检测日志。"""
+        self._log_callback = callback
+
+    def _emit_log(self, message: str):
+        logger.info(message)
+        cb = self._log_callback
+        if cb is not None:
+            try:
+                cb(message)
+            except Exception:
+                pass
 
     # ----- 过期/冷却清理 -----
     def _purge_expired(self):
@@ -181,7 +195,7 @@ class BlockedDomainTracker:
                 return
             pending.add(domain)
 
-        logger.info(f"[被墙检测] 网卡 [{nic_name}] 连接 {domain} 失败，启动后台验证...")
+        self._emit_log(f"[被墙检测] 网卡 [{nic_name}] 连接 {domain} 失败，启动后台验证...")
 
         verify_port = port if port > 0 else 443
 
@@ -195,7 +209,7 @@ class BlockedDomainTracker:
                     if not candidates:
                         break
                     test_nic = candidates[attempt % len(candidates)]
-                    logger.info(
+                    self._emit_log(
                         f"[被墙检测] 第 {attempt + 1}/{_VERIFY_RETRIES} 次验证: "
                         f"用 [{test_nic.get('name')}] 测试 {domain}:{verify_port}"
                     )
@@ -203,10 +217,9 @@ class BlockedDomainTracker:
                     if ok:
                         success_count += 1
                         if success_count >= _VERIFY_MIN_SUCCESS:
-                            break  # 提前达标，无需继续
+                            break
                     else:
-                        # 不立即中断——允许偶发失败，只要总体 ≥ _VERIFY_MIN_SUCCESS 即可
-                        logger.info(
+                        self._emit_log(
                             f"[被墙检测] 第 {attempt + 1} 次验证失败: [{test_nic.get('name')}] {domain}"
                         )
 
@@ -216,18 +229,18 @@ class BlockedDomainTracker:
                     expiry = now + _EXPIRY_SECONDS
                     with self._lock:
                         self._blocked.setdefault(nic_name, {})[domain] = expiry
-                    logger.info(
+                    self._emit_log(
                         f"[被墙确认] 网卡 [{nic_name}] 无法访问 {domain}（其他网卡 {success_count}/{_VERIFY_RETRIES} 次成功，{_EXPIRY_SECONDS // 60} 分钟后自动恢复）"
                     )
                 else:
                     cooldown_until = now + _COOLDOWN_SECONDS
                     with self._lock:
                         self._cooldown.setdefault(nic_name, {})[domain] = cooldown_until
-                    logger.info(
+                    self._emit_log(
                         f"[被墙检测] 验证未达标: [{nic_name}] -> {domain} ({success_count}/{_VERIFY_RETRIES})，{_COOLDOWN_SECONDS // 60} 分钟冷却"
                     )
             except Exception as e:
-                logger.warning(f"[被墙检测] 验证异常: [{nic_name}] -> {domain}: {type(e).__name__}: {e}")
+                self._emit_log(f"[被墙检测] 验证异常: [{nic_name}] -> {domain}: {type(e).__name__}: {e}")
             finally:
                 with self._lock:
                     self._pending_verifications.get(nic_name, set()).discard(domain)
@@ -264,12 +277,12 @@ class BlockedDomainTracker:
                     dns_error += f" | 公共DNS({nic_name}): {type(e2).__name__}"
 
             if dst_addr is None:
-                logger.info(f"[被墙检测] [{nic_name}] DNS解析失败: {dns_error}")
+                self._emit_log(f"[被墙检测] [{nic_name}] DNS解析失败: {dns_error}")
                 return False
 
             if_index = int(nic.get("if_index", nic.get("index", 0)) or 0)
             if not if_index:
-                logger.info(f"[被墙检测] [{nic_name}] 无有效 IfIndex")
+                self._emit_log(f"[被墙检测] [{nic_name}] 无有效 IfIndex")
                 return False
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -288,10 +301,10 @@ class BlockedDomainTracker:
             )
             return True
         except asyncio.TimeoutError:
-            logger.info(f"[被墙检测] [{nic_name}] TCP连接 {domain}:{test_port} 超时({_VERIFY_TIMEOUT}s)")
+            self._emit_log(f"[被墙检测] [{nic_name}] TCP连接 {domain}:{test_port} 超时({_VERIFY_TIMEOUT}s)")
             return False
         except Exception as e:
-            logger.info(f"[被墙检测] [{nic_name}] 连接 {domain}:{test_port} 失败: {type(e).__name__}: {e}")
+            self._emit_log(f"[被墙检测] [{nic_name}] 连接 {domain}:{test_port} 失败: {type(e).__name__}: {e}")
             return False
         finally:
             if sock is not None:

@@ -423,6 +423,8 @@ def create_main_window():
 
             # 同步被墙域名自动规避开关到全局追踪器
             get_tracker().enabled = bool(self._app_config.get("blocked_domain_bypass", True))
+            # 将追踪器日志桥接到主窗口日志文件
+            get_tracker().set_log_callback(self.append_log)
 
             self.scan_worker = ScanWorker()
             self.diag_worker = None
