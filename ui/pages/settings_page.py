@@ -33,6 +33,7 @@ from utils.autostart import set_autostart, is_autostart_enabled
 from utils.config_manager import (
     get_config_path, load_config, save_config, DEFAULT_DNS_SERVER, DEFAULT_DOH_PROVIDER,
 )
+from utils.blocked_domain_tracker import get_tracker
 
 DEFAULT_SOCKS_PORT = 10800
 DEFAULT_HTTP_PORT = 10801
@@ -58,6 +59,8 @@ class SettingsPage(QWidget):
     success_message = Signal(str)
     warning_message = Signal(str)
     dns_changed = Signal(str, str)
+    blocked_domain_settings_changed = Signal()
+    blocked_domains_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -203,7 +206,41 @@ class SettingsPage(QWidget):
         self.network_group.addSettingCard(self.doh_card)
         root.addWidget(self.network_group)
 
-        # ===== 分组3：配置与启动 =====
+        # ===== 分组3：高级网络 / 特殊网络环境 =====
+        self.advanced_network_group = SettingCardGroup(tr("settings_advanced_network"), container)
+        tracker = get_tracker()
+        self.blocked_enable_card = SwitchSettingCard(
+            resolve_icon("BLOCK", "CANCEL", "CLOSE"),
+            tr("blocked_enable"),
+            tr("blocked_enable_hint"),
+            parent=self.advanced_network_group,
+        )
+        self.blocked_enable_card.setChecked(tracker.enabled)
+        self.blocked_enable_card.checkedChanged.connect(self._on_blocked_enable_changed)
+        self.advanced_network_group.addSettingCard(self.blocked_enable_card)
+
+        self.blocked_expiry_card = SwitchSettingCard(
+            resolve_icon("HISTORY", "SYNC", "UPDATE"),
+            tr("blocked_expiry_toggle"),
+            tr("blocked_expiry_hint"),
+            parent=self.advanced_network_group,
+        )
+        self.blocked_expiry_card.setChecked(tracker.use_expiry)
+        self.blocked_expiry_card.checkedChanged.connect(self._on_blocked_expiry_changed)
+        self.advanced_network_group.addSettingCard(self.blocked_expiry_card)
+
+        self.blocked_manage_card = PushSettingCard(
+            tr("settings_blocked_domains_open"),
+            resolve_icon("BLOCK", "CANCEL", "CLOSE"),
+            tr("settings_blocked_domains_manage"),
+            tr("settings_blocked_domains_manage_hint"),
+            self.advanced_network_group,
+        )
+        self.blocked_manage_card.clicked.connect(self.blocked_domains_requested.emit)
+        self.advanced_network_group.addSettingCard(self.blocked_manage_card)
+        root.addWidget(self.advanced_network_group)
+
+        # ===== 分组4：配置与启动 =====
         self.startup_group = SettingCardGroup(tr("settings_config_group"), container)
 
         # 开机自启（SwitchSettingCard）
@@ -314,6 +351,18 @@ class SettingsPage(QWidget):
         else:
             self.warning_message.emit(tr("settings_dns_save_failed"))
 
+    def _on_blocked_enable_changed(self, checked: bool):
+        tracker = get_tracker()
+        tracker.enabled = checked
+        tracker.save()
+        self.blocked_domain_settings_changed.emit()
+
+    def _on_blocked_expiry_changed(self, checked: bool):
+        tracker = get_tracker()
+        tracker.use_expiry = checked
+        tracker.save()
+        self.blocked_domain_settings_changed.emit()
+
     def _on_autostart_changed(self, checked: bool):
         ok = set_autostart(checked)
         settings = QSettings("Hypostasis-Cat", "HypoMux")
@@ -342,6 +391,9 @@ class SettingsPage(QWidget):
         """运行中锁定会影响底层网络栈的设置项。"""
         self.dns_edit.setEnabled(enabled)
         self.doh_combo.setEnabled(enabled)
+        self.blocked_enable_card.setEnabled(enabled)
+        self.blocked_expiry_card.setEnabled(enabled)
+        self.blocked_manage_card.setEnabled(enabled)
 
     def retranslate_ui(self):
         self._page_title.setText(tr("nav_settings"))
@@ -371,6 +423,14 @@ class SettingsPage(QWidget):
         self.doh_combo.setItemText(1, tr("settings_doh_alidns"))
         self.doh_combo.setItemText(2, tr("settings_doh_dnspod"))
         self.doh_combo.setItemText(3, tr("settings_doh_google"))
+        self.advanced_network_group.titleLabel.setText(tr("settings_advanced_network"))
+        self.blocked_enable_card.titleLabel.setText(tr("blocked_enable"))
+        self.blocked_enable_card.contentLabel.setText(tr("blocked_enable_hint"))
+        self.blocked_expiry_card.titleLabel.setText(tr("blocked_expiry_toggle"))
+        self.blocked_expiry_card.contentLabel.setText(tr("blocked_expiry_hint"))
+        self.blocked_manage_card.titleLabel.setText(tr("settings_blocked_domains_manage"))
+        self.blocked_manage_card.contentLabel.setText(tr("settings_blocked_domains_manage_hint"))
+        self.blocked_manage_card.button.setText(tr("settings_blocked_domains_open"))
         self.startup_group.titleLabel.setText(tr("settings_config_group"))
         self.autostart_card.titleLabel.setText(tr("settings_autostart"))
         self.autostart_card.contentLabel.setText(tr("settings_autostart_hint"))

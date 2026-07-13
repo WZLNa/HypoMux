@@ -1,15 +1,15 @@
 """
-HypoMux 单网卡被墙域名页 (BlockedDomainsPage) - 第五个导航选项卡
+HypoMux 单网卡被墙域名记录管理组件 (BlockedDomainsPage)
 
-展示每张网卡上被确认无法访问的域名清单，提供启用/关闭自动规避、
-删除单条记录、清空全部等管理功能。
+展示每张网卡上被确认无法访问的域名清单，提供删除单条记录、清空全部等
+管理功能。功能开关位于设置页的“高级网络 / 特殊网络环境”分组。
 """
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QHeaderView
 from qfluentwidgets import (
     TableWidget, TitleLabel, BodyLabel, PushButton, TransparentPushButton,
-    SwitchSettingCard, FluentIcon,
+    FluentIcon,
 )
 
 from ui.i18n import tr
@@ -18,8 +18,6 @@ from utils.blocked_domain_tracker import get_tracker
 
 class BlockedDomainsPage(QWidget):
     """单网卡被墙域名管理页。"""
-
-    settings_changed = Signal()
 
     COL_NIC = 0
     COL_DOMAIN = 1
@@ -50,28 +48,6 @@ class BlockedDomainsPage(QWidget):
         self._hint.setWordWrap(True)
         root.addWidget(self._title)
         root.addWidget(self._hint)
-
-        # 开关卡片
-        tracker = get_tracker()
-        self._enable_card = SwitchSettingCard(
-            FluentIcon.COMPLETED,
-            tr("blocked_enable"),
-            tr("blocked_enable_hint"),
-            parent=self,
-        )
-        self._enable_card.setChecked(tracker.enabled)
-        self._enable_card.checkedChanged.connect(self._on_enable_changed)
-        root.addWidget(self._enable_card)
-
-        self._expiry_card = SwitchSettingCard(
-            FluentIcon.HISTORY,
-            tr("blocked_expiry_toggle"),
-            tr("blocked_expiry_hint"),
-            parent=self,
-        )
-        self._expiry_card.setChecked(tracker.use_expiry)
-        self._expiry_card.checkedChanged.connect(self._on_expiry_changed)
-        root.addWidget(self._expiry_card)
 
         # 工具栏
         self._toolbar = QHBoxLayout()
@@ -175,19 +151,6 @@ class BlockedDomainsPage(QWidget):
         self.tableWidget.setCellWidget(row, self.COL_ACTION, container)
 
     # ----- 交互 -----
-    def _on_enable_changed(self, checked: bool):
-        tracker = get_tracker()
-        tracker.enabled = checked
-        tracker.save()
-        self.settings_changed.emit()
-
-    def _on_expiry_changed(self, checked: bool):
-        tracker = get_tracker()
-        tracker.use_expiry = checked
-        tracker.save()
-        self.settings_changed.emit()
-        self._load_data()
-
     def _on_remove_domain(self, nic_name: str, domain: str):
         get_tracker().remove_domain(nic_name, domain)
         get_tracker().save()
@@ -212,9 +175,8 @@ class BlockedDomainsPage(QWidget):
     def set_controls_enabled(self, enabled: bool):
         """运行中锁死编辑入口，停止后恢复。"""
         self._controls_enabled = enabled
-        self._enable_card.setEnabled(enabled)
-        self._expiry_card.setEnabled(enabled)
         self._clear_all_btn.setEnabled(enabled)
+        self._refresh_btn.setEnabled(enabled)
         self.tableWidget.setEnabled(enabled)
         # enabled=False 表示加速引擎运行中：开启自动刷新；enabled=True：停止时关闭
         if not enabled:
@@ -228,10 +190,6 @@ class BlockedDomainsPage(QWidget):
     def retranslate_ui(self):
         self._title.setText(tr("blocked_title"))
         self._hint.setText(tr("blocked_hint"))
-        self._enable_card.titleLabel.setText(tr("blocked_enable"))
-        self._enable_card.contentLabel.setText(tr("blocked_enable_hint"))
-        self._expiry_card.titleLabel.setText(tr("blocked_expiry_toggle"))
-        self._expiry_card.contentLabel.setText(tr("blocked_expiry_hint"))
         self._clear_all_btn.setText(tr("blocked_clear_all"))
         self._refresh_btn.setText(tr("blocked_refresh"))
         self._empty_hint.setText(tr("blocked_no_data"))
