@@ -80,7 +80,8 @@ def default_config() -> Dict[str, Any]:
         "blocked_domain_bypass": False,  # 自动规避单网卡被墙域名（默认关闭，仅特殊网络环境建议开启）
         "blocked_domain_expiry": True,  # 被墙黑名单自动过期
         "weighted_scheduler": False,    # 权重调度器
-        "nic_bandwidth_limits": {},     # {nic_alias: mbps}
+        # 历史字段名保留兼容，实际存储的是 1-100 的相对调度权重。
+        "nic_bandwidth_limits": {},     # {nic_alias: schedule_weight}
     }
 
 
@@ -152,11 +153,11 @@ def _coerce_config(raw: Any) -> Dict[str, Any]:
     # weighted_scheduler：权重调度器开关
     cfg["weighted_scheduler"] = _coerce_bool(raw.get("weighted_scheduler"), False)
 
-    # nic_bandwidth_limits：网卡带宽上限 {alias: mbps}
+    # nic_bandwidth_limits：历史字段名，实际为网卡相对调度权重 {alias: 1-100}
     raw_limits = raw.get("nic_bandwidth_limits")
     if isinstance(raw_limits, dict):
         cfg["nic_bandwidth_limits"] = {
-            str(k): int(v) for k, v in raw_limits.items()
+            str(k): max(1, min(int(v), 100)) for k, v in raw_limits.items()
             if str(k) and isinstance(v, (int, float)) and int(v) > 0
         }
     else:

@@ -172,7 +172,7 @@ def create_main_window():
     """工厂函数：创建 MainWindow 实例（此时 QApplication 已存在）"""
     from PySide6.QtCore import Qt, QThread, Signal, Slot, QTimer, QSettings, QRect, QRectF, QPoint
     from PySide6.QtGui import QIcon, QAction, QFont, QPainter, QColor, QCursor
-    from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QWidget
+    from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QWidget, QDialog, QVBoxLayout
     from qfluentwidgets import (
         FluentWindow, NavigationItemPosition, InfoBar, InfoBarPosition,
         setThemeColor, setTheme, Theme, FluentIcon, qconfig, MessageBox,
@@ -525,7 +525,9 @@ def create_main_window():
             self.tools_page = ToolsPage(self)
             self.settings_page = SettingsPage(self)
             self.about_page = AboutPage(self)
-            self.blocked_page = BlockedDomainsPage(self)
+            self.blocked_page = None
+            self._blocked_domains_dialog = None
+            self._blocked_domains_controls_enabled = True
 
         def _init_navigation(self):
             # 图标方案（用户确认）：HOME / GLOBAL(回退 GLOBE/IOT) / SPEED_HIGH / SETTING
@@ -545,9 +547,6 @@ def create_main_window():
             # 关于页归入主业务导航流，保持左下角视觉清爽
             self.addSubInterface(
                 self.about_page, FluentIcon.INFO, tr("nav_about")
-            )
-            self.addSubInterface(
-                self.blocked_page, resolve_icon("BLOCK", "CANCEL", "CLOSE"), tr("nav_blocked_domains")
             )
 
         def _refine_navigation_appearance(self):
@@ -591,7 +590,7 @@ def create_main_window():
             self.home_page.deselect_all_clicked.connect(self.on_deselect_all_clicked)
             self.home_page.refresh_clicked.connect(self.load_adapters)
             self.home_page.adapter_checked.connect(self.on_adapter_checked)
-            self.home_page.adapter_bandwidth_changed.connect(self.on_bandwidth_changed)
+            self.home_page.adapter_weight_changed.connect(self.on_weight_changed)
             self.home_page.weighted_toggled.connect(self.on_weighted_toggled)
             self.home_page.mode_changed.connect(self.on_mode_changed)
             # 工具页（任务2：体检页也能勾选网卡，并入选择流）
@@ -607,8 +606,8 @@ def create_main_window():
             self.settings_page.success_message.connect(self.show_success)
             self.settings_page.warning_message.connect(self.show_warning)
             self.settings_page.dns_changed.connect(self._on_dns_changed)
-            # 被墙域名页（开关变更即持久化到 config）
-            self.blocked_page.settings_changed.connect(self._persist_config)
+            self.settings_page.blocked_domain_settings_changed.connect(self._on_blocked_domain_settings_changed)
+            self.settings_page.blocked_domains_requested.connect(self._open_blocked_domains_dialog)
 
             # 启动恢复：运行模式分段控件 + 路由规则表
             try:
@@ -680,7 +679,10 @@ def create_main_window():
             self.tools_page.retranslate_ui()
             self.settings_page.retranslate_ui()
             self.about_page.retranslate_ui()
-            self.blocked_page.retranslate_ui()
+            if self.blocked_page is not None:
+                self.blocked_page.retranslate_ui()
+            if self._blocked_domains_dialog is not None:
+                self._blocked_domains_dialog.setWindowTitle(tr("blocked_title"))
             self.tray_icon.setToolTip(tr("tray_tooltip"))
 
         # ---------- 端口同步 ----------
@@ -702,13 +704,41 @@ def create_main_window():
             if self._tun_active:
                 self._regenerate_singbox_config()
 
+        def _on_blocked_domain_settings_changed(self):
+            self._persist_config()
+            if self.blocked_page is not None:
+                self.blocked_page._load_data()
+
+        def _open_blocked_domains_dialog(self):
+            """从设置页打开单网卡被墙域名记录管理窗口。"""
+            if self._blocked_domains_dialog is None:
+                dialog = QDialog(self)
+                dialog.setWindowTitle(tr("blocked_title"))
+                dialog.setMinimumSize(680, 480)
+                dialog.resize(780, 580)
+                layout = QVBoxLayout(dialog)
+                layout.setContentsMargins(0, 0, 0, 0)
+                self.blocked_page = BlockedDomainsPage(dialog)
+                self.blocked_page.set_controls_enabled(self._blocked_domains_controls_enabled)
+                layout.addWidget(self.blocked_page)
+                self._blocked_domains_dialog = dialog
+            self.blocked_page._load_data()
+            self._blocked_domains_dialog.show()
+            self._blocked_domains_dialog.raise_()
+            self._blocked_domains_dialog.activateWindow()
+
+        def _set_blocked_domains_controls_enabled(self, enabled: bool):
+            self._blocked_domains_controls_enabled = enabled
+            if self.blocked_page is not None:
+                self.blocked_page.set_controls_enabled(enabled)
+
         # ========== 配置持久化 ==========
         def _collect_config(self) -> dict:
             socks = int(self._app_config.get("socks_port", DEFAULT_SOCKS_PORT))
             http = int(self._app_config.get("http_port", socks + 1))
-            # 网卡扫描完成前 home_page._cards 为空，get_bandwidth_limits() 返回 {}，
+            # 网卡扫描完成前 home_page._cards 为空，get_schedule_weights() 返回 {}，
             # 此时回退到已保存值，避免用空字典覆盖用户设置的调度权重
-            bw_limits = self.home_page.get_bandwidth_limits()
+            bw_limits = self.home_page.get_schedule_weights()
             if not bw_limits:
                 bw_limits = self._app_config.get("nic_bandwidth_limits", {})
             return {
@@ -742,7 +772,7 @@ def create_main_window():
             self.tools_page.set_card_checked(alias, checked)
             self._persist_config()
 
-        def on_bandwidth_changed(self, alias: str, mbps: int):
+        def on_weight_changed(self, alias: str, weight: int):
             self._persist_config()
 
         def on_weighted_toggled(self, enabled: bool):
@@ -973,7 +1003,7 @@ def create_main_window():
             # 1) 先拉起 Python 多端口出站池（2001/2002/2003）
             try:
                 use_weighted = self.home_page.is_weighted_scheduler()
-                bw_limits = self.home_page.get_bandwidth_limits() if use_weighted else None
+                bw_limits = self.home_page.get_schedule_weights() if use_weighted else None
                 self._pool_worker = MultiPortProxyWorker(
                     selected_nics=selected,
                     use_weighted=use_weighted,
@@ -991,7 +1021,7 @@ def create_main_window():
                 self.routing_page.set_controls_enabled(False)
                 self.settings_page.set_controls_enabled(False)
                 self.tools_page.set_controls_enabled(False)
-                self.blocked_page.set_controls_enabled(False)
+                self._set_blocked_domains_controls_enabled(False)
                 self._tun_pool_start_timer.start(5000)
                 self._pool_worker.start()
             except Exception as e:
@@ -1126,7 +1156,7 @@ def create_main_window():
             self._pending_socks_addr = f"127.0.0.1:{socks_port}"
             self._pending_http_addr = f"127.0.0.1:{http_port}"
             use_weighted = self.home_page.is_weighted_scheduler()
-            bw_limits = self.home_page.get_bandwidth_limits() if use_weighted else None
+            bw_limits = self.home_page.get_schedule_weights() if use_weighted else None
 
             try:
                 self.proxy_worker = ProxyWorker(
@@ -1190,7 +1220,7 @@ def create_main_window():
             self.routing_page.set_controls_enabled(False)
             self.settings_page.set_controls_enabled(False)
             self.tools_page.set_controls_enabled(False)
-            self.blocked_page.set_controls_enabled(False)
+            self._set_blocked_domains_controls_enabled(False)
 
         def _exit_boosting_ui(self):
             self.home_page.engine_switch.setEnabled(True)
@@ -1199,7 +1229,7 @@ def create_main_window():
             self.routing_page.set_controls_enabled(True)
             self.settings_page.set_controls_enabled(True)
             self.tools_page.set_controls_enabled(True)
-            self.blocked_page.set_controls_enabled(True)
+            self._set_blocked_domains_controls_enabled(True)
             self.home_page.reset_telemetry()
             self._last_up_mbps = 0.0
             self._last_conn_count = 0

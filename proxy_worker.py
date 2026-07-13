@@ -165,9 +165,10 @@ class RoundRobinBalancer:
 # L4 连接调度器 (WeightedBalancer)
 # ==========================================
 class WeightedBalancer:
-    """按用户设定的带宽上限做加权随机分配，快卡多吃、慢卡少吃。
+    """按用户设定的相对权重做加权随机分配。
 
-    权重计算：nic_weight = bandwidth_mbps / total_bandwidth_mbps
+    权重计算：nic_weight = schedule_weight / total_schedule_weight。
+    该值只影响新连接的分配概率，不会对网卡进行带宽限速。
     随机选择：按权重累计概率分布选取网卡。
     兼容 RoundRobinBalancer 的全部接口（get_next_nic / get_next_nic_for_domain
     / on_connect / on_disconnect / active_connections）。

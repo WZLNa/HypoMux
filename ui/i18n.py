@@ -115,6 +115,8 @@ I18N_MAP = {
         "home_engine_title": "聚合分流引擎",
         "home_engine_on": "聚合引擎：已启用",
         "home_engine_off": "聚合引擎：未启用",
+        "home_engine_control": "启用聚合引擎",
+        "home_engine_control_hint": "启动后将使用已勾选网卡进行聚合分流。",
         "home_engine_switch_on": "已启用",
         "home_engine_switch_off": "未启用",
         "home_engine_ports": "SOCKS {socks} · HTTP/HTTPS {http}",
@@ -190,6 +192,10 @@ I18N_MAP = {
         "settings_theme_auto": "跟随系统",
         "settings_config_group": "配置与启动",
         "settings_network_dns": "网络与 DNS 设置",
+        "settings_advanced_network": "高级网络 / 特殊网络环境",
+        "settings_blocked_domains_manage": "单网卡被墙域名记录",
+        "settings_blocked_domains_manage_hint": "查看、刷新或清除已自动记录的域名。",
+        "settings_blocked_domains_open": "管理",
         "settings_dns_server": "传统 DNS 兜底服务器",
         "settings_dns_fallback_hint": "仅在 DoH 不可用时作为 53 端口兜底使用",
         "settings_dns_placeholder": "例如 223.5.5.5",
@@ -238,9 +244,10 @@ I18N_MAP = {
 
         # === 权重调度器 ===
         "home_weighted_toggle": "使用权重调度器",
-        "home_weighted_hint": "按各网卡调度权重做加权分配，权重越高分配越多连接。关闭则轮询均分。",
-        "home_bw_column": "调度权重 (Mbps)",
-        "home_bw_column_hint": "该数值仅作调度器计算权重之用，不对网卡限速",
+        "home_weighted_status": "权重调度器：{state}",
+        "home_weighted_hint": "按网卡相对权重分配新连接；默认权重相等。关闭后采用轮询均分。",
+        "home_bw_column": "调度权重",
+        "home_bw_column_hint": "相对比例：数值越大，分配到的新连接越多；默认均为 1，不会限制网卡速度。",
     },
 
     "en": {
@@ -347,6 +354,8 @@ I18N_MAP = {
         "home_engine_title": "Aggregation Engine",
         "home_engine_on": "Engine: Enabled",
         "home_engine_off": "Engine: Disabled",
+        "home_engine_control": "Enable aggregation engine",
+        "home_engine_control_hint": "Use the selected adapters for aggregated traffic splitting.",
         "home_engine_switch_on": "Enabled",
         "home_engine_switch_off": "Disabled",
         "home_engine_ports": "SOCKS {socks} · HTTP/HTTPS {http}",
@@ -422,6 +431,10 @@ I18N_MAP = {
         "settings_theme_auto": "Follow System",
         "settings_config_group": "Config & Startup",
         "settings_network_dns": "Network and DNS Settings",
+        "settings_advanced_network": "Advanced / Special Network Environment",
+        "settings_blocked_domains_manage": "Per-NIC Blocked Domain Records",
+        "settings_blocked_domains_manage_hint": "View, refresh, or clear automatically recorded domains.",
+        "settings_blocked_domains_open": "Manage",
         "settings_dns_server": "Traditional DNS fallback server",
         "settings_dns_fallback_hint": "Used only as a port-53 fallback when DoH is unavailable",
         "settings_dns_placeholder": "Example 223.5.5.5",
@@ -470,9 +483,10 @@ I18N_MAP = {
 
         # === Weighted Scheduler ===
         "home_weighted_toggle": "Use Weighted Scheduler",
-        "home_weighted_hint": "Weighted distribution by NIC schedule weights. Higher weight gets more connections. Disable for equal round-robin.",
-        "home_bw_column": "Schedule Weight (Mbps)",
-        "home_bw_column_hint": "Used only for scheduler weight calculation, does NOT rate-limit the NIC",
+        "home_weighted_status": "Weighted scheduler: {state}",
+        "home_weighted_hint": "Distribute new connections by relative NIC weight; all weights are equal by default. Disable for round-robin.",
+        "home_bw_column": "Schedule Weight",
+        "home_bw_column_hint": "Relative ratio: higher values receive more new connections. Default is 1 and this never rate-limits a NIC.",
     },
 }
 
